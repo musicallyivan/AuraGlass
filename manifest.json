@@ -1,0 +1,28 @@
+[
+  {
+    "name": "AuraGlass",
+    "description": "Frosted Glassmorphism theme with live dynamic cover backdrop, Apple Music blurred lyrics, 3D Vinyl Showcase mode, Mini Neon Equalizer, and built-in AuraGlass Studio control center.",
+    "preview": "preview.png",
+    "readme": "README.md",
+    "usercss": "user.css",
+    "schemes": "color.ini",
+    "include": [
+      "theme.js"
+    ],
+    "authors": [
+      {
+        "name": "musicallyivan",
+        "url": "https://github.com/musicallyivan"
+      }
+    ],
+    "tags": [
+      "glassmorphism",
+      "frosted-glass",
+      "dynamic-colors",
+      "apple-music",
+      "lyrics",
+      "vinyl",
+      "showcase"
+    ]
+  }
+]

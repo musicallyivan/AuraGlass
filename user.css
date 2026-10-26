@@ -1,0 +1,1442 @@
+/* ==========================================================================
+   AuraGlass — Modern Glassmorphism Theme for Spicetify
+   Features:
+   - Dynamic Blurred Album Art Backdrop & Dominant Color Engine (via theme.js)
+   - Frosted Glass Panels with Specular Borders (Fixed-Position Tooltip Safe)
+   - Apple Music Style Blurred & Glowing Lyrics
+   - Floating Capsule Player Bar
+   - Built-in Live Control Center (Topbar Settings Menu)
+   ========================================================================== */
+
+:root {
+  --auraglass-bg-blur: 56px;
+  --auraglass-bg-saturate: 185%;
+  --auraglass-bg-brightness: 0.38;
+  --auraglass-panel-opacity: 0.6;
+  --auraglass-border-alpha: 0.1;
+  --auraglass-panel-bg: linear-gradient(
+    145deg,
+    rgba(28, 31, 52, calc(var(--auraglass-panel-opacity) * 0.92)) 0%,
+    rgba(12, 14, 24, var(--auraglass-panel-opacity)) 100%
+  );
+  --auraglass-player-bg: linear-gradient(
+    145deg,
+    rgba(32, 36, 60, calc(min(0.95, var(--auraglass-panel-opacity) + 0.16))) 0%,
+    rgba(14, 16, 28, calc(min(0.98, var(--auraglass-panel-opacity) + 0.22))) 100%
+  );
+  --auraglass-card-bg: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.065) 0%,
+    rgba(255, 255, 255, 0.025) 100%
+  );
+  --auraglass-card-hover-bg: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(var(--spice-rgb-button), 0.12) 100%
+  );
+  --auraglass-border: rgba(255, 255, 255, var(--auraglass-border-alpha));
+  --auraglass-border-bright: rgba(
+    255,
+    255,
+    255,
+    calc(var(--auraglass-border-alpha) + 0.12)
+  );
+  --auraglass-radius-lg: 18px;
+  --auraglass-radius-md: 14px;
+  --auraglass-radius-sm: 10px;
+  --auraglass-radius-pill: 999px;
+  --auraglass-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --auraglass-glow: 0 0 22px rgba(var(--spice-rgb-button), 0.45);
+  --auraglass-art-url: none;
+}
+
+/* Smooth transition when dynamic track colors change */
+:root {
+  transition: --spice-button 0.6s ease, --spice-button-active 0.6s ease;
+}
+
+/* --------------------------------------------------------------------------
+   1. Dynamic Blurred Album Art Background Layer + Live Apple Music Motion
+   -------------------------------------------------------------------------- */
+body,
+#main,
+.Root,
+.Root__top-container {
+  background: #08090f !important;
+}
+
+#auraglass-bg-container {
+  position: fixed;
+  inset: -60px;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(
+    circle at 20% 20%,
+    rgba(var(--spice-rgb-button), 0.28) 0%,
+    rgba(var(--spice-rgb-misc), 0.15) 45%,
+    #07080e 100%
+  );
+}
+
+.auraglass-bg-layer {
+  position: absolute;
+  inset: -40px;
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(var(--auraglass-bg-blur)) saturate(var(--auraglass-bg-saturate))
+    brightness(var(--auraglass-bg-brightness));
+  transform: scale(1.18);
+  transition: opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.3s ease;
+  will-change: opacity, transform;
+}
+
+/* Apple Music Live Breathing & Flowing Background Animation */
+@keyframes auraglass-live-breathe-a {
+  0% {
+    transform: scale(1.22) translate3d(0%, 0%, 0) rotate(0deg);
+  }
+  33% {
+    transform: scale(1.32) translate3d(3.5%, -2.5%, 0) rotate(4deg);
+  }
+  66% {
+    transform: scale(1.26) translate3d(-3%, 3%, 0) rotate(-3.5deg);
+  }
+  100% {
+    transform: scale(1.22) translate3d(0%, 0%, 0) rotate(0deg);
+  }
+}
+
+@keyframes auraglass-live-aurora {
+  0% {
+    transform: translate3d(-6%, -4%, 0) scale(1.1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(6%, 5%, 0) scale(1.25) rotate(180deg);
+  }
+  100% {
+    transform: translate3d(-6%, -4%, 0) scale(1.1) rotate(360deg);
+  }
+}
+
+body:not(.auraglass-disable-live-bg) .auraglass-bg-layer {
+  animation: auraglass-live-breathe-a 24s ease-in-out infinite;
+}
+
+#auraglass-bg-aurora {
+  position: absolute;
+  inset: -25%;
+  pointer-events: none;
+  opacity: 0.55;
+  background: radial-gradient(
+      circle at 28% 32%,
+      rgba(var(--spice-rgb-button), 0.36) 0%,
+      transparent 48%
+    ),
+    radial-gradient(
+      circle at 72% 68%,
+      rgba(var(--spice-rgb-misc), 0.3) 0%,
+      transparent 52%
+    );
+  filter: blur(48px);
+}
+
+body:not(.auraglass-disable-live-bg) #auraglass-bg-aurora {
+  animation: auraglass-live-aurora 28s linear infinite;
+}
+
+body.auraglass-disable-live-bg #auraglass-bg-aurora {
+  opacity: 0.25;
+}
+
+/* Subtle ambient vignette over the blurred art for text legibility */
+#auraglass-bg-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(10, 11, 18, 0.1) 0%,
+    rgba(8, 9, 15, 0.62) 100%
+  );
+}
+
+/* --------------------------------------------------------------------------
+   2. Main Layout Grid, Frosted Glass Containers, 100% Glass Headers & Zen Mode
+   NOTE: We avoid `backdrop-filter` and `transform` on parent containers so
+   Chromium never breaks `position: fixed` coordinates for Spotify tooltips!
+   -------------------------------------------------------------------------- */
+.Root__top-container {
+  background: transparent !important;
+}
+
+/* Strip opaque backgrounds from inner wrappers so glass panels work */
+.Root__main-view,
+.main-view-container,
+.main-view-container__scroll-node,
+.main-view-container__scroll-node-child,
+.main-view-container__mh-footer-container,
+#Desktop_LeftSidebar_Id,
+.Root__nav-bar,
+.YourLibraryX,
+.yQCyOSVcMCen_NJKPHB6,
+.u3xv0vOK9EJmOplXOrhG,
+.R1kU6b2KxZc8FWfbYf3m,
+.XvuTwlgQRqJ5NnVLN9ZH,
+.Root__right-sidebar,
+.s8fIIxwITjOk1aFOxhPv,
+.NowPlayingView,
+aside[aria-label],
+section[data-testid="home-page"],
+section[data-testid="playlist-page"],
+section[data-testid="album-page"],
+section[data-testid="artist-page"],
+.marketplace-grid,
+.contentSpacing {
+  background-color: transparent !important;
+}
+
+/* Left Sidebar / Your Library Panel */
+#Desktop_LeftSidebar_Id,
+.Root__nav-bar,
+.yQCyOSVcMCen_NJKPHB6 {
+  background: var(--auraglass-panel-bg) !important;
+  border: 1px solid var(--auraglass-border) !important;
+  border-radius: var(--auraglass-radius-lg) !important;
+  box-shadow: var(--auraglass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Center Main View Panel */
+.Root__main-view,
+.R1kU6b2KxZc8FWfbYf3m {
+  background: var(--auraglass-panel-bg) !important;
+  border: 1px solid var(--auraglass-border) !important;
+  border-radius: var(--auraglass-radius-lg) !important;
+  box-shadow: var(--auraglass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Right Sidebar (Now Playing / Queue / Lyrics) */
+.Root__right-sidebar > div,
+.Root__right-sidebar aside,
+.s8fIIxwITjOk1aFOxhPv aside {
+  background: var(--auraglass-panel-bg) !important;
+  border: 1px solid var(--auraglass-border) !important;
+  border-radius: var(--auraglass-radius-lg) !important;
+  box-shadow: var(--auraglass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+/* 100% Glass Headers for Playlists, Albums, Artists & Home */
+body:not(.auraglass-disable-glass-headers) .main-topBar-background,
+body:not(.auraglass-disable-glass-headers) .main-TopBar-background,
+body:not(.auraglass-disable-glass-headers) .main-entityHeader-backgroundColor,
+body:not(.auraglass-disable-glass-headers) .main-entityHeader-overlay,
+body:not(.auraglass-disable-glass-headers) .main-actionBarBackground-background,
+body:not(.auraglass-disable-glass-headers) .main-home-homeHeader,
+body:not(.auraglass-disable-glass-headers) .under-main-view div,
+body:not(.auraglass-disable-glass-headers) .JhOTA2pevTUzQPJ7GJG0,
+body:not(.auraglass-disable-glass-headers) .QwcIb5mGvbu4qb3_cnAQ,
+body:not(.auraglass-disable-glass-headers) .ZDb8FjylyS1RZnYv3ubr,
+body:not(.auraglass-disable-glass-headers) .D56jlo4eZiO_uR9CJ0hc,
+body:not(.auraglass-disable-glass-headers) .f5IimFOcWI6VZcJ1ilua,
+body:not(.auraglass-disable-glass-headers) .wqRf3uZh8pUe125CRGFh,
+body:not(.auraglass-disable-glass-headers) .yUjdM2oRRn7kw8tR1rqV,
+body:not(.auraglass-disable-glass-headers) .main-view-container__scroll-node-child div[style*="--background-noise"],
+body:not(.auraglass-disable-glass-headers) .main-view-container__scroll-node-child div[style*="background-color: rgb("],
+body:not(.auraglass-disable-glass-headers) .main-view-container__scroll-node-child div[style*="background-color: rgba("] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Sticky Tracklist Column Header inside Playlists/Albums -> Translucent Glass */
+.iPo4a2lbrsxW9Iedav3h.rrn0EjHTu7eCxn9G0Rrc,
+.main-trackList-trackListHeaderStuck {
+  background: rgba(16, 18, 32, 0.78) !important;
+  border-bottom: 1px solid var(--auraglass-border-bright) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28) !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. Top Global Navigation Bar & Search Input (Glass Pill)
+   -------------------------------------------------------------------------- */
+.Root__globalNav,
+.main-globalNav-historyButtonsContainer {
+  background: transparent !important;
+}
+
+/* Search Input Bar */
+.main-globalNav-searchInputContainer form,
+.main-globalNav-searchInputContainer input,
+div[data-testid="root"] form[role="search"] {
+  background: rgba(255, 255, 255, 0.065) !important;
+  border: 1px solid var(--auraglass-border) !important;
+  border-radius: var(--auraglass-radius-pill) !important;
+  transition: background-color 0.25s ease, border-color 0.25s ease,
+    box-shadow 0.25s ease !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.main-globalNav-searchInputContainer form:focus-within,
+div[data-testid="root"] form[role="search"]:focus-within {
+  background: rgba(255, 255, 255, 0.11) !important;
+  border-color: rgba(var(--spice-rgb-button), 0.7) !important;
+  box-shadow: var(--auraglass-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+}
+
+/* Topbar Round Icon Buttons (Home, Marketplace, Notifications, Profile) */
+.main-globalNav-navLink,
+.main-topBar-button,
+button[data-testid="home-button"],
+button[data-testid="user-widget-link"] {
+  background: rgba(255, 255, 255, 0.065) !important;
+  border: 1px solid var(--auraglass-border) !important;
+  border-radius: var(--auraglass-radius-pill) !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease !important;
+}
+
+.main-globalNav-navLink:hover,
+.main-topBar-button:hover,
+button[data-testid="home-button"]:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: var(--auraglass-border-bright) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35),
+    0 0 12px rgba(var(--spice-rgb-button), 0.3) !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. Floating Capsule Player Bar (Bottom Now Playing Bar)
+   -------------------------------------------------------------------------- */
+body:not(.auraglass-disable-floating-player) .Root__now-playing-bar {
+  background: var(--auraglass-player-bg) !important;
+  border: 1px solid rgba(255, 255, 255, calc(var(--auraglass-border-alpha) + 0.05)) !important;
+  border-radius: 20px !important;
+  margin: 2px 4px 4px 4px !important;
+  padding: 2px 8px !important;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55),
+    0 0 26px rgba(var(--spice-rgb-button), 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease !important;
+}
+
+body.auraglass-disable-floating-player .Root__now-playing-bar {
+  background: var(--auraglass-player-bg) !important;
+  border-top: 1px solid var(--auraglass-border) !important;
+}
+
+body:not(.auraglass-disable-floating-player) .Root__now-playing-bar:hover {
+  border-color: rgba(var(--spice-rgb-button), 0.45) !important;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.62),
+    0 0 32px rgba(var(--spice-rgb-button), 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+
+.main-nowPlayingBar-container,
+.main-nowPlayingBar-nowPlayingBar {
+  background: transparent !important;
+  border-radius: 18px !important;
+}
+
+/* Mini Cover Art inside Player Bar */
+.main-nowPlayingWidget-coverArt .cover-art,
+.main-coverSlotCollapsed-container img {
+  border-radius: 10px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Play / Pause Primary Button in Player Bar */
+.player-controls__buttons button[data-testid="control-button-playpause"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.player-controls__buttons button[data-testid="control-button-playpause"] > span {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(
+    135deg,
+    var(--spice-button) 0%,
+    var(--spice-button-active) 100%
+  ) !important;
+  color: #ffffff !important;
+  border-radius: 50% !important;
+  box-shadow: 0 4px 16px rgba(var(--spice-rgb-button), 0.55),
+    inset 0 1px 1px rgba(255, 255, 255, 0.38) !important;
+  transition: box-shadow 0.25s ease, filter 0.25s ease, background 0.4s ease !important;
+}
+
+.player-controls__buttons button[data-testid="control-button-playpause"] > span span {
+  background: transparent !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: static !important;
+}
+
+.player-controls__buttons button[data-testid="control-button-playpause"] svg,
+.player-controls__buttons button[data-testid="control-button-playpause"] path {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.player-controls__buttons button[data-testid="control-button-playpause"]:hover > span {
+  box-shadow: 0 6px 24px rgba(var(--spice-rgb-button), 0.85),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+  filter: brightness(1.1);
+}
+
+/* Progress Bar & Volume Bar with Glowing Dynamic Fill */
+.x-progressBar-fillColor,
+.playback-bar .x-progressBar-fillColor {
+  background: linear-gradient(
+    90deg,
+    var(--spice-button) 0%,
+    var(--spice-misc) 100%
+  ) !important;
+  box-shadow: 0 0 14px rgba(var(--spice-rgb-button), 0.75) !important;
+  border-radius: var(--auraglass-radius-pill) !important;
+  transition: background 0.4s ease, box-shadow 0.4s ease !important;
+}
+
+.x-progressBar-progressBarBg {
+  background-color: rgba(255, 255, 255, 0.14) !important;
+  border-radius: var(--auraglass-radius-pill) !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. Apple Music Style Glass Lyrics (Full View & Right Sidebar Preview)
+   -------------------------------------------------------------------------- */
+/* Strip solid background from Lyrics page so blurred album cover shines through */
+.lyrics-lyrics-container,
+.lyrics-lyrics-background,
+.Root__lyrics-cinema,
+div[data-testid="lyrics-page"],
+.wYWhVPZoG93lR7ogMIug,
+.Ii0P5lvVrAzHgsutQTVz,
+.pDYh0zFb7QjZraY2dACF,
+.u42Yq3ZaAiFZXbkvIpwy {
+  background: transparent !important;
+  background-color: transparent !important;
+  --lyrics-color-background: transparent !important;
+}
+
+/* Remove solid bottom fade overlay on lyrics container */
+.u42Yq3ZaAiFZXbkvIpwy .z5jGVvMKwt3RUCcmlwby::after {
+  display: none !important;
+}
+
+.lyrics-lyrics-contentContainer,
+.z5jGVvMKwt3RUCcmlwby {
+  max-width: 860px !important;
+  margin: 0 auto !important;
+  padding: 24px 32px !important;
+}
+
+/* Inactive / Passed / Upcoming Lyric Lines (Full Lyrics & Right Sidebar Preview) */
+body:not(.auraglass-disable-apple-lyrics) .lyrics-lyricsContent-lyric:not(.lyrics-lyricsContent-active),
+body:not(.auraglass-disable-apple-lyrics) [data-testid="lyrics-line"]:not([aria-current="true"]),
+body:not(.auraglass-disable-apple-lyrics) .J4_kkGYm5hjbZlztykxr:not(.SOT5gG00YqnGQ4uR7PwQ),
+body:not(.auraglass-disable-apple-lyrics) .hJKSSpOBNJuFSTloxKMB:not(.a4XRba3ln81TuiaPWIFq) {
+  color: rgba(255, 255, 255, 0.4) !important;
+  opacity: 0.55 !important;
+  filter: blur(1.65px) !important;
+  transform: scale(0.96);
+  transform-origin: left center;
+  transition: filter 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    text-shadow 0.42s ease !important;
+  border-radius: 12px;
+  padding: 6px 12px;
+}
+
+/* Unblur on hover so user can easily read & click a verse to jump */
+body:not(.auraglass-disable-apple-lyrics) .lyrics-lyricsContent-lyric:not(.lyrics-lyricsContent-active):hover,
+body:not(.auraglass-disable-apple-lyrics) [data-testid="lyrics-line"]:not([aria-current="true"]):hover,
+body:not(.auraglass-disable-apple-lyrics) .J4_kkGYm5hjbZlztykxr:not(.SOT5gG00YqnGQ4uR7PwQ):hover,
+body:not(.auraglass-disable-apple-lyrics) .hJKSSpOBNJuFSTloxKMB:not(.a4XRba3ln81TuiaPWIFq):hover {
+  filter: blur(0px) !important;
+  opacity: 0.9 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  text-decoration: none !important;
+}
+
+body:not(.auraglass-disable-apple-lyrics) .J4_kkGYm5hjbZlztykxr:hover .Dn2b5rh5_6c7YvX5uyak {
+  text-decoration: none !important;
+}
+
+/* Active Singing Lyric Line — Crisp, Enlarged & Glowing! */
+body:not(.auraglass-disable-apple-lyrics) .lyrics-lyricsContent-active,
+body:not(.auraglass-disable-apple-lyrics) .lyrics-lyricsContent-lyric.lyrics-lyricsContent-active,
+body:not(.auraglass-disable-apple-lyrics) [data-testid="lyrics-line"][aria-current="true"],
+body:not(.auraglass-disable-apple-lyrics) .J4_kkGYm5hjbZlztykxr.SOT5gG00YqnGQ4uR7PwQ,
+body:not(.auraglass-disable-apple-lyrics) .hJKSSpOBNJuFSTloxKMB.a4XRba3ln81TuiaPWIFq,
+body:not(.auraglass-disable-apple-lyrics) .t9GzJ9ytY59434W8eIk6 {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  filter: blur(0px) !important;
+  transform: scale(1.03);
+  transform-origin: left center;
+  text-shadow: 0 0 26px rgba(var(--spice-rgb-button), 0.9),
+    0 0 48px rgba(var(--spice-rgb-misc), 0.5),
+    0 4px 14px rgba(0, 0, 0, 0.6) !important;
+  font-weight: 800 !important;
+  transition: filter 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.35s ease,
+    opacity 0.35s ease,
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    text-shadow 0.35s ease !important;
+}
+
+body:not(.auraglass-disable-apple-lyrics) .J4_kkGYm5hjbZlztykxr.SOT5gG00YqnGQ4uR7PwQ * {
+  color: #ffffff !important;
+}
+
+/* Right Sidebar Lyrics Preview Card ("Vista previa de la letra") */
+.s3QUzmQcpGiRmmV6gs4Q.dUx1fVu3KEbJMxH2_bgl,
+.Root__right-sidebar [style*="--lyrics-color-background"],
+.Root__right-sidebar [style*="--transcript-color-background"],
+.Root__right-sidebar div[style*="background-color: rgb("] {
+  background: linear-gradient(
+    145deg,
+    rgba(var(--spice-rgb-button), 0.24) 0%,
+    rgba(20, 22, 38, 0.68) 100%
+  ) !important;
+  border: 1px solid rgba(var(--spice-rgb-button), 0.38) !important;
+  border-radius: var(--auraglass-radius-md) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. Cards, Shortcuts, Marketplace Cards & Track Rows
+   -------------------------------------------------------------------------- */
+.main-card-card,
+.marketplace-card,
+div[data-encore-id="card"],
+.ofahUhwV8VMlglXFA3hw,
+.gQZ7_Fo8dI0_kP1_UK4V {
+  background: var(--auraglass-card-bg) !important;
+  border: 1px solid var(--auraglass-border) !important;
+  border-radius: var(--auraglass-radius-md) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  transition: background 0.25s ease, border-color 0.25s ease,
+    box-shadow 0.25s ease !important;
+}
+
+.main-card-card:hover,
+.marketplace-card:hover,
+div[data-encore-id="card"]:hover,
+.ofahUhwV8VMlglXFA3hw:hover,
+.gQZ7_Fo8dI0_kP1_UK4V:hover {
+  background: var(--auraglass-card-hover-bg) !important;
+  border-color: var(--auraglass-border-bright) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42),
+    0 0 20px rgba(var(--spice-rgb-button), 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Card Images */
+.main-cardImage-imageWrapper,
+.main-cardImage-image,
+.marketplace-card__image-container img,
+.NMt6sLFwXdQoCRD6zzVJ,
+.YUapWS4WjaUrFWUB1Bar {
+  border-radius: var(--auraglass-radius-sm) !important;
+}
+
+/* Home Shortcuts Grid (Top 6-8 Quick Access Pills) */
+.view-homeShortcutsGrid-shortcut,
+.DCKnSfe0fWAmIJZTYg_0 {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid var(--auraglass-border) !important;
+  border-radius: var(--auraglass-radius-sm) !important;
+  transition: background-color 0.22s ease, border-color 0.22s ease,
+    box-shadow 0.22s ease !important;
+}
+
+.view-homeShortcutsGrid-shortcut:hover,
+.DCKnSfe0fWAmIJZTYg_0:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--auraglass-border-bright) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Tracklist Rows */
+.main-trackList-trackListRow,
+.xwwlUJUZLpjPnZByq04Y {
+  border-radius: var(--auraglass-radius-sm) !important;
+  border: 1px solid transparent !important;
+  transition: background-color 0.18s ease, border-color 0.18s ease !important;
+}
+
+.main-trackList-trackListRow:hover,
+.xwwlUJUZLpjPnZByq04Y:hover {
+  background-color: rgba(255, 255, 255, 0.065) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.main-trackList-trackListRow.main-trackList-selected,
+.main-trackList-trackListRow[aria-selected="true"],
+.xwwlUJUZLpjPnZByq04Y.cBaCr8a86htxgcL815Aw {
+  background-color: rgba(var(--spice-rgb-button), 0.18) !important;
+  border-color: rgba(var(--spice-rgb-button), 0.4) !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. Right Sidebar Now Playing Cover, Spinning Vinyl Mode & Filter Tabs
+   -------------------------------------------------------------------------- */
+.Root__right-sidebar img {
+  border-radius: var(--auraglass-radius-md) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.48),
+    0 0 24px rgba(var(--spice-rgb-button), 0.18) !important;
+  transition: box-shadow 0.5s ease, border-radius 0.4s ease !important;
+}
+
+/* Spinning Vinyl Record Mode (applied directly to leaf <img> so tooltips stay 100% safe!) */
+@keyframes auraglass-vinyl-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+body:not(.auraglass-disable-vinyl) [data-testid="cover-art-button"] img,
+body:not(.auraglass-disable-vinyl) .main-nowPlayingWidget-coverArt img,
+body:not(.auraglass-disable-vinyl) [data-testid="now-playing-widget"] img {
+  border-radius: 50% !important;
+  border: 3px solid rgba(15, 17, 28, 0.92) !important;
+  box-shadow: 0 0 0 1.5px rgba(var(--spice-rgb-button), 0.65),
+    0 4px 14px rgba(0, 0, 0, 0.65) !important;
+  animation: auraglass-vinyl-spin 14s linear infinite;
+  animation-play-state: paused;
+}
+
+body:not(.auraglass-disable-vinyl).auraglass-is-playing [data-testid="cover-art-button"] img,
+body:not(.auraglass-disable-vinyl).auraglass-is-playing .main-nowPlayingWidget-coverArt img,
+body:not(.auraglass-disable-vinyl).auraglass-is-playing [data-testid="now-playing-widget"] img {
+  animation-play-state: running;
+}
+
+button[role="tab"],
+.marketplace-header .marketplace-tab,
+.search-searchCategory-categoryGrid button {
+  border-radius: var(--auraglass-radius-pill) !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease !important;
+}
+
+/* --------------------------------------------------------------------------
+   8. Tooltips, Context Menus, Dropdowns & Modals
+   -------------------------------------------------------------------------- */
+.a_QAHZU3VTgG_kDYWmDv,
+[role="tooltip"] {
+  background: rgba(20, 22, 38, 0.94) !important;
+  color: var(--spice-text) !important;
+  border: 1px solid var(--auraglass-border-bright) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+.main-contextMenu-menu,
+.Kxn4m_BkzsLT3UCqj50Y,
+.yp9K_GG6MgsoxKPtPMPE,
+.GenericModal {
+  background: rgba(18, 20, 34, 0.92) !important;
+  border: 1px solid var(--auraglass-border-bright) !important;
+  border-radius: var(--auraglass-radius-md) !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+/* Custom Sleek Scrollbar */
+.os-scrollbar-handle {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-radius: var(--auraglass-radius-pill) !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.os-scrollbar-handle:hover {
+  background: rgba(var(--spice-rgb-button), 0.65) !important;
+}
+
+/* --------------------------------------------------------------------------
+   9. AuraGlass Live Control Center
+   -------------------------------------------------------------------------- */
+#auraglass-topbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  margin-inline: 4px;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--spice-rgb-button), 0.25) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  color: var(--spice-text);
+  border: 1px solid rgba(var(--spice-rgb-button), 0.45);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 14px rgba(var(--spice-rgb-button), 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  -webkit-app-region: no-drag;
+}
+
+#auraglass-topbar-btn:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(var(--spice-rgb-button), 0.48) 0%,
+    rgba(255, 255, 255, 0.16) 100%
+  );
+  border-color: rgba(var(--spice-rgb-button), 0.85);
+  box-shadow: 0 0 20px rgba(var(--spice-rgb-button), 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+#auraglass-topbar-btn svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
+#auraglass-panel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(5, 6, 12, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 58px 20px 20px 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+#auraglass-panel-overlay.auraglass-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#auraglass-panel {
+  width: 360px;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  background: linear-gradient(
+    155deg,
+    rgba(26, 29, 48, 0.95) 0%,
+    rgba(13, 15, 26, 0.98) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  padding: 18px 20px;
+  color: #f4f6ff;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75),
+    0 0 36px rgba(var(--spice-rgb-button), 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  font-family: inherit;
+}
+
+.auraglass-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auraglass-panel-title {
+  font-size: 15px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+}
+
+.auraglass-panel-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.auraglass-panel-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.auraglass-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #b4bce0;
+  margin: 10px 0 8px 0;
+}
+
+.auraglass-presets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.auraglass-preset-btn {
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.18s ease;
+}
+
+.auraglass-preset-btn:hover {
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.auraglass-preset-btn.active {
+  background: rgba(var(--spice-rgb-button), 0.25);
+  border-color: var(--spice-button);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(var(--spice-rgb-button), 0.35);
+}
+
+.auraglass-preset-btn.full-width {
+  grid-column: span 2;
+  justify-content: space-between;
+}
+
+.auraglass-custom-color-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+#ag-custom-color-input {
+  width: 24px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.auraglass-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.auraglass-control-row {
+  margin-bottom: 9px;
+}
+
+.auraglass-control-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 3px;
+  color: #e2e8f0;
+}
+
+.auraglass-slider {
+  width: 100%;
+  accent-color: var(--spice-button);
+  cursor: pointer;
+}
+
+.auraglass-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 12px;
+  color: #e2e8f0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.auraglass-reset-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f6ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.auraglass-reset-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* --------------------------------------------------------------------------
+   10. Mini Audio Equalizer, VisionOS Spotlight, Typography & Showcase Mode
+   -------------------------------------------------------------------------- */
+/* Topbar Showcase Button */
+#auraglass-showcase-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  margin-inline: 4px;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--spice-rgb-button), 0.25) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  color: var(--spice-text);
+  border: 1px solid rgba(var(--spice-rgb-button), 0.45);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 14px rgba(var(--spice-rgb-button), 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  -webkit-app-region: no-drag;
+}
+
+#auraglass-showcase-btn:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(var(--spice-rgb-button), 0.48) 0%,
+    rgba(255, 255, 255, 0.16) 100%
+  );
+  border-color: rgba(var(--spice-rgb-button), 0.85);
+  box-shadow: 0 0 20px rgba(var(--spice-rgb-button), 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Animated 4-Bar Neon Equalizer in Now Playing Bar */
+#auraglass-mini-eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2.5px;
+  height: 14px;
+  margin-inline-end: 8px;
+  vertical-align: middle;
+}
+
+body.auraglass-disable-eq #auraglass-mini-eq {
+  display: none !important;
+}
+
+.auraglass-eq-bar {
+  width: 3px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    var(--spice-button-active) 0%,
+    var(--spice-button) 100%
+  );
+  box-shadow: 0 0 8px rgba(var(--spice-rgb-button), 0.8);
+  transition: height 0.2s ease;
+}
+
+@keyframes auraglass-eq-bounce-1 {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
+}
+@keyframes auraglass-eq-bounce-2 {
+  0%, 100% { height: 13px; }
+  40% { height: 5px; }
+  80% { height: 11px; }
+}
+@keyframes auraglass-eq-bounce-3 {
+  0%, 100% { height: 6px; }
+  35% { height: 14px; }
+  70% { height: 4px; }
+}
+@keyframes auraglass-eq-bounce-4 {
+  0%, 100% { height: 11px; }
+  60% { height: 4px; }
+}
+
+body.auraglass-is-playing .auraglass-eq-bar:nth-child(1) {
+  animation: auraglass-eq-bounce-1 0.75s ease-in-out infinite;
+}
+body.auraglass-is-playing .auraglass-eq-bar:nth-child(2) {
+  animation: auraglass-eq-bounce-2 0.62s ease-in-out infinite;
+}
+body.auraglass-is-playing .auraglass-eq-bar:nth-child(3) {
+  animation: auraglass-eq-bounce-3 0.84s ease-in-out infinite;
+}
+body.auraglass-is-playing .auraglass-eq-bar:nth-child(4) {
+  animation: auraglass-eq-bounce-4 0.68s ease-in-out infinite;
+}
+
+/* VisionOS Interactive Mouse Spotlight on Hovered Cards & Rows */
+body:not(.auraglass-disable-spotlight) .main-card-card:hover,
+body:not(.auraglass-disable-spotlight) div[data-encore-id="card"]:hover,
+body:not(.auraglass-disable-spotlight) .ofahUhwV8VMlglXFA3hw:hover,
+body:not(.auraglass-disable-spotlight) .gQZ7_Fo8dI0_kP1_UK4V:hover {
+  background: radial-gradient(
+      260px circle at var(--ag-card-x, 50%) var(--ag-card-y, 50%),
+      rgba(var(--spice-rgb-button), 0.24),
+      rgba(255, 255, 255, 0.06) 65%
+    ) !important;
+}
+
+/* Live Font Switcher */
+body[data-auraglass-font="modern"],
+body[data-auraglass-font="modern"] button,
+body[data-auraglass-font="modern"] input {
+  font-family: "Segoe UI Variable Display", "Inter", system-ui, -apple-system, sans-serif !important;
+  letter-spacing: -0.01em;
+}
+
+body[data-auraglass-font="editorial"],
+body[data-auraglass-font="editorial"] button,
+body[data-auraglass-font="editorial"] input {
+  font-family: "Georgia", "Palatino Linotype", "Times New Roman", serif !important;
+}
+
+body[data-auraglass-font="mono"],
+body[data-auraglass-font="mono"] button,
+body[data-auraglass-font="mono"] input {
+  font-family: "Cascadia Code", "JetBrains Mono", "Consolas", monospace !important;
+  letter-spacing: -0.02em;
+}
+
+.auraglass-select {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(16, 18, 32, 0.9);
+  color: #f4f6ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+/* Fullscreen Showcase / Screensaver Overlay (Alt + S) */
+#auraglass-showcase-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 42px 56px;
+  background: radial-gradient(
+    circle at 30% 35%,
+    rgba(var(--spice-rgb-button), 0.28) 0%,
+    rgba(var(--spice-rgb-misc), 0.14) 45%,
+    rgba(6, 7, 14, 0.88) 100%
+  );
+  backdrop-filter: blur(52px) saturate(190%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  color: #ffffff;
+}
+
+#auraglass-showcase-overlay.auraglass-showcase-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ag-showcase-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ag-showcase-clock-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+#ag-showcase-time {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+#ag-showcase-date {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.68);
+  text-transform: capitalize;
+}
+
+#ag-showcase-close {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#ag-showcase-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.ag-showcase-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 56px;
+  max-width: 1120px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.ag-showcase-art-wrap {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  flex-shrink: 0;
+}
+
+#ag-showcase-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.75),
+    0 0 60px rgba(var(--spice-rgb-button), 0.42);
+  transition: border-radius 0.4s ease, transform 0.5s ease;
+}
+
+body:not(.auraglass-disable-vinyl) #ag-showcase-art {
+  border-radius: 50%;
+  border: 8px solid rgba(12, 14, 24, 0.92);
+  animation: auraglass-vinyl-spin 18s linear infinite;
+  animation-play-state: paused;
+}
+
+body:not(.auraglass-disable-vinyl).auraglass-is-playing #ag-showcase-art {
+  animation-play-state: running;
+}
+
+.ag-showcase-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ag-showcase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(var(--spice-rgb-button), 0.22);
+  border: 1px solid rgba(var(--spice-rgb-button), 0.48);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+#ag-showcase-title {
+  font-size: clamp(32px, 4.2vw, 56px);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 32px rgba(var(--spice-rgb-button), 0.55),
+    0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+#ag-showcase-artist {
+  font-size: clamp(18px, 2.2vw, 28px);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+#ag-showcase-album {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.ag-showcase-controls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 14px;
+}
+
+.ag-showcase-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 18px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ag-showcase-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.ag-showcase-btn.primary {
+  width: 62px;
+  height: 62px;
+  font-size: 22px;
+  background: linear-gradient(
+    135deg,
+    var(--spice-button-active) 0%,
+    var(--spice-button) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 28px rgba(var(--spice-rgb-button), 0.7);
+}
+
+.ag-showcase-bottom {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* --------------------------------------------------------------------------
+   11. Round 4: Realistic Vinyl Grooves, Showcase Progress & Live Lyrics,
+       Player Rhythm Pulse, Context Menu Pills & Sleep Timer UI
+   -------------------------------------------------------------------------- */
+/* Realistic LP Vinyl Grooves & Center Spindle Hole in Showcase */
+body:not(.auraglass-disable-vinyl) .ag-showcase-art-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+  background: repeating-radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 2px,
+      transparent 6px
+    ),
+    conic-gradient(
+      from 40deg,
+      transparent 0deg,
+      rgba(255, 255, 255, 0.14) 35deg,
+      transparent 75deg,
+      transparent 180deg,
+      rgba(255, 255, 255, 0.14) 215deg,
+      transparent 255deg
+    );
+}
+
+body:not(.auraglass-disable-vinyl) .ag-showcase-art-wrap::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+  background: radial-gradient(
+    circle,
+    rgba(8, 9, 16, 0.96) 0%,
+    rgba(8, 9, 16, 0.96) 34%,
+    rgba(var(--spice-rgb-button), 0.55) 36%,
+    rgba(18, 20, 34, 0.88) 70%
+  );
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75);
+}
+
+/* Live Synchronized Lyric Line inside Showcase */
+#ag-showcase-lyric {
+  min-height: 28px;
+  font-size: clamp(16px, 1.8vw, 22px);
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 24px rgba(var(--spice-rgb-button), 0.85),
+    0 2px 10px rgba(0, 0, 0, 0.6);
+  opacity: 0.94;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Interactive Neon Progress Bar inside Showcase */
+.ag-showcase-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 520px;
+  margin-top: 4px;
+}
+
+.ag-showcase-time-lbl {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
+  min-width: 38px;
+  font-variant-numeric: tabular-nums;
+}
+
+#ag-showcase-bar-track {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: height 0.18s ease;
+}
+
+#ag-showcase-bar-track:hover {
+  height: 10px;
+}
+
+#ag-showcase-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--spice-button) 0%,
+    var(--spice-button-active) 55%,
+    var(--spice-misc) 100%
+  );
+  box-shadow: 0 0 14px rgba(var(--spice-rgb-button), 0.85);
+  transition: width 0.2s linear;
+}
+
+/* Ambient Rhythm Underglow on Floating Capsule Player when Playing */
+@keyframes auraglass-player-pulse {
+  0%,
+  100% {
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6),
+      0 0 24px rgba(var(--spice-rgb-button), 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+  50% {
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.65),
+      0 0 38px rgba(var(--spice-rgb-button), 0.34),
+      0 0 64px rgba(var(--spice-rgb-misc), 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  }
+}
+
+body.auraglass-is-playing:not(.auraglass-disable-floating-player) .Root__now-playing-bar {
+  animation: auraglass-player-pulse 4.5s ease-in-out infinite;
+}
+
+/* Right-Click Glass Context Menu Item Pills */
+.main-contextMenu-menuItemButton,
+#context-menu button[role="menuitem"],
+div[data-tippy-root] button[role="menuitem"] {
+  border-radius: 9px !important;
+  margin: 2px 4px !important;
+  transition: background-color 0.16s ease, color 0.16s ease !important;
+}
+
+.main-contextMenu-menuItemButton:hover,
+#context-menu button[role="menuitem"]:hover,
+div[data-tippy-root] button[role="menuitem"]:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(var(--spice-rgb-button), 0.28) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  ) !important;
+  color: #ffffff !important;
+}
+
+/* Studio Action Row (Export / Import & Sleep Timer Badge) */
+.auraglass-action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.auraglass-action-btn {
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f6ff;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.auraglass-action-btn:hover {
+  background: rgba(var(--spice-rgb-button), 0.24);
+  border-color: rgba(var(--spice-rgb-button), 0.55);
+}
+
+#ag-sleep-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--spice-button-active);
+}
