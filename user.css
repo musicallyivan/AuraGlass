@@ -58,25 +58,44 @@
 /* --------------------------------------------------------------------------
    1. Dynamic Blurred Album Art Background Layer + Live Apple Music Motion
    -------------------------------------------------------------------------- */
-body,
+body {
+  background: radial-gradient(
+      circle at 18% 22%,
+      rgba(var(--spice-rgb-button), 0.34) 0%,
+      transparent 48%
+    ),
+    radial-gradient(
+      circle at 82% 76%,
+      rgba(var(--spice-rgb-misc), 0.26) 0%,
+      transparent 52%
+    ),
+    #07080e !important;
+}
+
 #main,
 .Root,
 .Root__top-container {
-  background: #08090f !important;
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 #auraglass-bg-container {
   position: fixed;
   inset: -60px;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   overflow: hidden;
   background: radial-gradient(
     circle at 20% 20%,
-    rgba(var(--spice-rgb-button), 0.28) 0%,
-    rgba(var(--spice-rgb-misc), 0.15) 45%,
+    rgba(var(--spice-rgb-button), 0.32) 0%,
+    rgba(var(--spice-rgb-misc), 0.18) 45%,
     #07080e 100%
   );
+}
+
+#main {
+  position: relative;
+  z-index: 1;
 }
 
 .auraglass-bg-layer {
