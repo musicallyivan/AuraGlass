@@ -33,3 +33,17 @@
    spicetify config current_theme AuraGlass color_scheme AuraGlass inject_css 1 replace_colors 1 inject_theme_js 1
    spicetify apply
    ```
+
+## 💬 Ideas, bugs and contributions
+
+AuraGlass is open to ideas and community contributions. If you find a bug, [open a bug report](https://github.com/musicallyivan/AuraGlass/issues/new?template=bug_report.yml). To request a feature or suggest an improvement, [share an idea](https://github.com/musicallyivan/AuraGlass/issues/new?template=feature_request.yml). Please search existing issues first so related feedback stays together.
+
+Pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting one. For help using the theme, see [SUPPORT.md](SUPPORT.md). To report a security concern, follow [SECURITY.md](SECURITY.md).
+
+## ♿ Accessibility and performance
+
+AuraGlass supports keyboard focus, reduced motion preferences, and a Low Power Mode in AuraGlass Studio. Low Power Mode reduces background blur and decorative animation. Spotify and Spicetify update independently, so some selectors can change between Spotify versions; please include your Spotify and Spicetify versions in compatibility reports.
+
+## 📄 License
+
+This repository does not currently include a license. Please contact the maintainer before reusing or redistributing its code or assets.

@@ -25,6 +25,7 @@
     spotlight: true,
     appleLyrics: true,
     floatingPlayer: true,
+    lowPower: false,
   };
 
   const COLOR_PRESETS = {
@@ -65,6 +66,35 @@
   let settings = loadSettings();
   let lastExtractedColors = COLOR_PRESETS.AuraGlass;
 
+  function normalizeSettings(candidate) {
+    const source = candidate && typeof candidate === "object" && !Array.isArray(candidate)
+      ? candidate
+      : {};
+    const merged = { ...DEFAULT_SETTINGS };
+    const clampNumber = (key, min, max) => {
+      const value = Number(source[key]);
+      merged[key] = Number.isFinite(value)
+        ? Math.max(min, Math.min(max, value))
+        : DEFAULT_SETTINGS[key];
+    };
+
+    const colorModes = ["dynamic", "AuraGlass", "FrostCyan", "RoseQuartz", "EmeraldMist", "custom"];
+    const fonts = ["default", "modern", "editorial", "mono"];
+    merged.colorMode = colorModes.includes(source.colorMode) ? source.colorMode : DEFAULT_SETTINGS.colorMode;
+    merged.customColor = typeof source.customColor === "string" && /^#[0-9a-f]{6}$/i.test(source.customColor)
+      ? source.customColor
+      : DEFAULT_SETTINGS.customColor;
+    merged.fontFamily = fonts.includes(source.fontFamily) ? source.fontFamily : DEFAULT_SETTINGS.fontFamily;
+    clampNumber("bgBlur", 15, 100);
+    clampNumber("bgBrightness", 15, 75);
+    clampNumber("panelOpacity", 20, 92);
+    clampNumber("borderAlpha", 0, 35);
+    ["liveBackground", "glassHeaders", "vinylMode", "miniEq", "spotlight", "appleLyrics", "floatingPlayer", "lowPower"].forEach((key) => {
+      merged[key] = typeof source[key] === "boolean" ? source[key] : DEFAULT_SETTINGS[key];
+    });
+    return merged;
+  }
+
   function loadSettings() {
     try {
       const raw =
@@ -72,7 +102,7 @@
         localStorage.getItem("auraglass_settings_v2") ||
         localStorage.getItem("auraglass_settings_v1");
       if (!raw) return { ...DEFAULT_SETTINGS };
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+      return normalizeSettings(JSON.parse(raw));
     } catch (e) {
       return { ...DEFAULT_SETTINGS };
     }
@@ -308,7 +338,7 @@
 
   function applyAllSettings() {
     const root = document.documentElement;
-    root.style.setProperty("--auraglass-bg-blur", `${settings.bgBlur}px`);
+    root.style.setProperty("--auraglass-bg-blur", `${settings.lowPower ? Math.min(settings.bgBlur, 28) : settings.bgBlur}px`);
     root.style.setProperty(
       "--auraglass-bg-brightness",
       (settings.bgBrightness / 100).toFixed(2)
@@ -353,6 +383,7 @@
       "auraglass-disable-floating-player",
       !settings.floatingPlayer
     );
+    document.body.classList.toggle("auraglass-low-power", settings.lowPower);
     document.body.classList.remove("auraglass-zen-mode");
 
     if (settings.colorMode === "dynamic") {
@@ -373,7 +404,13 @@
       document.querySelector('[data-testid="context-item-info-title"]') ||
       document.querySelector(".main-trackInfo-name");
     if (!trackTitleEl) {
-      setTimeout(mountMiniEqualizer, 800);
+      if (!mountMiniEqualizer.retry) mountMiniEqualizer.retry = setInterval(() => {
+        if (document.querySelector('[data-testid="context-item-info-title"]') || document.querySelector(".main-trackInfo-name")) {
+          clearInterval(mountMiniEqualizer.retry);
+          mountMiniEqualizer.retry = null;
+          mountMiniEqualizer();
+        }
+      }, 1500);
       return;
     }
 
@@ -455,6 +492,7 @@
     }
 
     const palette = await extractVibrantPaletteFromImage(artUrl);
+    if (getCurrentCoverUrl() !== artUrl) return;
     lastExtractedColors = palette;
     if (settings.colorMode === "dynamic") {
       applyColorPalette(palette);
@@ -478,6 +516,10 @@
 
     const overlay = document.createElement("div");
     overlay.id = "auraglass-showcase-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", "AuraGlass Showcase");
+    overlay.setAttribute("aria-hidden", "true");
     overlay.innerHTML = `
       <div class="ag-showcase-top">
         <div class="ag-showcase-clock-wrap">
@@ -552,6 +594,7 @@
         if (curEl) curEl.textContent = formatMs(cur);
         if (durEl) durEl.textContent = formatMs(dur);
         if (fillEl) fillEl.style.width = `${pct.toFixed(1)}%`;
+        if (progressTrack) progressTrack.setAttribute("aria-valuenow", pct.toFixed(0));
 
         if (lyricEl) {
           const activeLine =
@@ -566,8 +609,25 @@
     }
 
     updateClock();
-    setInterval(updateClock, 10000);
-    setInterval(updateShowcaseProgressAndLyric, 450);
+    let clockInterval = null;
+    let progressInterval = null;
+    const startShowcaseUpdates = () => {
+      if (clockInterval || progressInterval) return;
+      updateClock();
+      updateShowcaseProgressAndLyric();
+      clockInterval = setInterval(updateClock, 10000);
+      progressInterval = setInterval(updateShowcaseProgressAndLyric, 900);
+    };
+    const stopShowcaseUpdates = () => {
+      clearInterval(clockInterval);
+      clearInterval(progressInterval);
+      clockInterval = progressInterval = null;
+    };
+    const showcaseObserver = new MutationObserver(() => {
+      if (overlay.classList.contains("auraglass-showcase-open")) startShowcaseUpdates();
+      else stopShowcaseUpdates();
+    });
+    showcaseObserver.observe(overlay, { attributes: true, attributeFilter: ["class"] });
 
     document
       .getElementById("ag-showcase-bar-track")
@@ -584,11 +644,29 @@
           setTimeout(updateShowcaseProgressAndLyric, 80);
         }
       });
+    const progressTrack = document.getElementById("ag-showcase-bar-track");
+    progressTrack.setAttribute("role", "slider");
+    progressTrack.setAttribute("aria-label", "Posición de reproducción");
+    progressTrack.setAttribute("aria-valuemin", "0");
+    progressTrack.setAttribute("aria-valuemax", "100");
+    progressTrack.setAttribute("tabindex", "0");
+    progressTrack.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+      e.preventDefault();
+      const duration = Spicetify.Player.getDuration?.() || 0;
+      if (!duration || !Spicetify.Player.seek) return;
+      const current = Spicetify.Player.getProgress?.() || 0;
+      const step = Math.max(5000, Math.floor(duration * 0.01));
+      const next = e.key === "Home" ? 0 : e.key === "End" ? duration : current + (e.key === "ArrowRight" ? step : -step);
+      Spicetify.Player.seek(Math.max(0, Math.min(duration, next)));
+    });
 
     document
       .getElementById("ag-showcase-close")
       .addEventListener("click", () => {
         overlay.classList.remove("auraglass-showcase-open");
+        overlay.setAttribute("aria-hidden", "true");
+        document.getElementById("auraglass-showcase-btn")?.focus();
       });
 
     document
@@ -609,7 +687,12 @@
     const overlay = document.getElementById("auraglass-showcase-overlay");
     if (!overlay) return;
     updateShowcaseMetadata();
-    overlay.classList.toggle("auraglass-showcase-open");
+    const opening = !overlay.classList.contains("auraglass-showcase-open");
+    overlay.classList.toggle("auraglass-showcase-open", opening);
+    overlay.setAttribute("aria-hidden", String(!opening));
+    document
+      .getElementById(opening ? "ag-showcase-close" : "auraglass-showcase-btn")
+      ?.focus();
   }
 
   // ------------------------------------------------------------------------
@@ -618,7 +701,7 @@
   document.addEventListener(
     "mousemove",
     (e) => {
-      if (!settings.spotlight) return;
+      if (!settings.spotlight || settings.lowPower) return;
       const card = e.target.closest(
         '.main-card-card, div[data-encore-id="card"], .ofahUhwV8VMlglXFA3hw, .gQZ7_Fo8dI0_kP1_UK4V'
       );
@@ -760,6 +843,11 @@
           <input type="checkbox" id="ag-toggle-player" ${settings.floatingPlayer ? "checked" : ""}>
         </div>
 
+        <div class="auraglass-toggle-row">
+          <span>⚡ Modo de bajo consumo (menos efectos)</span>
+          <input type="checkbox" id="ag-toggle-low-power" ${settings.lowPower ? "checked" : ""}>
+        </div>
+
         <div class="auraglass-section-label" style="display:flex;justify-content:space-between;align-items:center;">
           <span>🌙 Temporizador de Sueño</span>
           <span id="ag-sleep-status"></span>
@@ -823,6 +911,7 @@
         settings.appleLyrics;
       document.getElementById("ag-toggle-player").checked =
         settings.floatingPlayer;
+      document.getElementById("ag-toggle-low-power").checked = settings.lowPower;
     }
 
     window.__auraglassSyncUI = syncPanelUI;
@@ -960,6 +1049,12 @@
         applyAllSettings();
       });
 
+    document.getElementById("ag-toggle-low-power").addEventListener("change", (e) => {
+      settings.lowPower = e.target.checked;
+      saveSettings();
+      applyAllSettings();
+    });
+
     // Sleep Timer Logic
     let sleepDeadline = 0;
     let sleepInterval = null;
@@ -994,10 +1089,16 @@
       });
 
     // Export / Import Theme Settings
-    document.getElementById("ag-btn-export").addEventListener("click", (e) => {
+    document.getElementById("ag-btn-export").addEventListener("click", async (e) => {
       const btn = e.currentTarget;
       const json = JSON.stringify(settings);
-      navigator.clipboard?.writeText(json);
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error("Clipboard API unavailable");
+        await navigator.clipboard.writeText(json);
+      } catch (err) {
+        window.prompt("Copy your AuraGlass settings:", json);
+        return;
+      }
       Spicetify.showNotification?.("✨ Configuración de AuraGlass copiada al portapapeles");
       btn.textContent = "✅ ¡Copiado!";
       setTimeout(() => (btn.textContent = "📋 Copiar mi Tema"), 1800);
@@ -1010,7 +1111,7 @@
       if (!raw) return;
       try {
         const parsed = JSON.parse(raw);
-        settings = { ...DEFAULT_SETTINGS, ...parsed };
+        settings = normalizeSettings(parsed);
         saveSettings();
         applyAllSettings();
         syncPanelUI();
@@ -1040,7 +1141,13 @@
     const globalNav =
       userWidget?.parentElement || document.querySelector(".Root__globalNav");
     if (!globalNav) {
-      setTimeout(mountTopbarButtons, 600);
+      if (!mountTopbarButtons.retry) mountTopbarButtons.retry = setInterval(() => {
+        if (document.querySelector('button[data-testid="user-widget-link"]') || document.querySelector(".Root__globalNav")) {
+          clearInterval(mountTopbarButtons.retry);
+          mountTopbarButtons.retry = null;
+          mountTopbarButtons();
+        }
+      }, 1500);
       return;
     }
 
@@ -1081,12 +1188,21 @@
 
   // Keyboard shortcuts: Alt + S (Showcase), Esc (close Showcase)
   window.addEventListener("keydown", (e) => {
+    const target = e.target;
+    const typing = target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
     if (e.altKey && (e.key === "s" || e.key === "S")) {
+      if (typing) return;
       e.preventDefault();
       toggleShowcase();
     } else if (e.key === "Escape") {
       const showcase = document.getElementById("auraglass-showcase-overlay");
       if (showcase) showcase.classList.remove("auraglass-showcase-open");
+      if (showcase) showcase.setAttribute("aria-hidden", "true");
+      if (showcase?.classList.contains("auraglass-showcase-open") === false) {
+        document.getElementById("auraglass-showcase-btn")?.focus();
+      }
+      const panel = document.getElementById("auraglass-panel-overlay");
+      if (panel) panel.classList.remove("auraglass-open");
     }
   });
 

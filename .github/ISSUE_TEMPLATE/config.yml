@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Usage help and troubleshooting
+    url: https://github.com/musicallyivan/AuraGlass/blob/main/SUPPORT.md
+    about: Read the support guide before opening a general question.

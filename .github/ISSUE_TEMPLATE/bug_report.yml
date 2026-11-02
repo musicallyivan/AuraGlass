@@ -1,0 +1,47 @@
+name: Bug report
+description: Report something that is broken or behaving unexpectedly.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve AuraGlass. Search existing issues before submitting.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected to happen.
+      placeholder: A clear description of the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. See the problem
+    validations:
+      required: true
+  - type: input
+    id: spotify
+    attributes:
+      label: Spotify version and platform
+      placeholder: Spotify for Windows, version ...
+    validations:
+      required: true
+  - type: input
+    id: spicetify
+    attributes:
+      label: Spicetify version
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console errors or screenshots
+      description: Remove personal information before sharing logs or screenshots.
+      render: text
+    validations:
+      required: false

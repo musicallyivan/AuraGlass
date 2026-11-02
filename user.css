@@ -1459,3 +1459,86 @@ div[data-tippy-root] button[role="menuitem"]:hover {
   font-weight: 700;
   color: var(--spice-button-active);
 }
+
+/* Accessible keyboard focus for AuraGlass controls */
+#auraglass-topbar-btn:focus-visible,
+#auraglass-showcase-btn:focus-visible,
+#auraglass-panel button:focus-visible,
+#auraglass-panel input:focus-visible,
+#auraglass-panel select:focus-visible,
+#auraglass-showcase-overlay button:focus-visible,
+#ag-showcase-bar-track:focus-visible {
+  outline: 2px solid var(--spice-button-active);
+  outline-offset: 3px;
+}
+
+/* Responsive Showcase and Studio panel */
+@media (max-width: 760px) {
+  #auraglass-showcase-overlay {
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .ag-showcase-center {
+    flex-direction: column;
+    gap: 24px;
+    padding: 28px 0;
+  }
+
+  .ag-showcase-art-wrap {
+    width: min(58vw, 280px);
+    height: min(58vw, 280px);
+  }
+
+  .ag-showcase-meta {
+    width: 100%;
+    text-align: center;
+    align-items: center;
+  }
+
+  .ag-showcase-progress-wrap {
+    max-width: 100%;
+  }
+
+  .ag-showcase-controls {
+    justify-content: center;
+  }
+
+  #auraglass-panel-overlay {
+    padding: 48px 10px 10px;
+  }
+
+  #auraglass-panel {
+    width: min(360px, calc(100vw - 20px));
+    max-height: calc(100vh - 64px);
+  }
+}
+
+/* Reduce expensive effects on request and when the OS prefers less motion */
+body.auraglass-low-power .auraglass-bg-layer {
+  animation: none !important;
+  filter: blur(min(28px, var(--auraglass-bg-blur))) saturate(125%)
+    brightness(var(--auraglass-bg-brightness));
+  will-change: auto;
+}
+
+body.auraglass-low-power #auraglass-bg-aurora,
+body.auraglass-low-power .auraglass-eq-bar,
+body.auraglass-low-power .Root__now-playing-bar {
+  animation: none !important;
+}
+
+body.auraglass-low-power #auraglass-bg-aurora {
+  opacity: 0.15;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

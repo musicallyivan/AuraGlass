@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest a feature, improvement, or visual refinement.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: Ideas and small refinements are welcome. Search existing issues first.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to improve?
+      description: Describe the problem, limitation, or opportunity.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like AuraGlass to do?
+      description: Describe your suggested feature or change.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or references
+      description: Optional examples, mockups, or other approaches.
+    validations:
+      required: false
