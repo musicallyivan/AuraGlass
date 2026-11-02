@@ -291,7 +291,6 @@ body:not(.auraglass-disable-glass-headers) .main-view-container__scroll-node-chi
 
 /* Search Input Bar */
 .main-globalNav-searchInputContainer form,
-.main-globalNav-searchInputContainer input,
 div[data-testid="root"] form[role="search"] {
   background: rgba(255, 255, 255, 0.065) !important;
   border: 1px solid var(--auraglass-border) !important;
@@ -299,6 +298,15 @@ div[data-testid="root"] form[role="search"] {
   transition: background-color 0.25s ease, border-color 0.25s ease,
     box-shadow 0.25s ease !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.main-globalNav-searchInputContainer input,
+div[data-testid="root"] form[role="search"] input {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 .main-globalNav-searchInputContainer form:focus-within,
@@ -1541,4 +1549,26 @@ body.auraglass-low-power #auraglass-bg-aurora {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Spotify's Ctrl+K quick-search popup is rendered above the current page.
+   Keep it opaque so home cards and recommendations do not show through. */
+[role="dialog"]:has(input),
+[role="listbox"] {
+  background: rgba(18, 20, 34, 0.98) !important;
+  color: var(--spice-text) !important;
+  border: 1px solid var(--auraglass-border-bright) !important;
+  border-radius: var(--auraglass-radius-md) !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.68),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(24px) saturate(145%);
+}
+
+[role="dialog"]:has(input) input {
+  color: var(--spice-text) !important;
+}
+
+[role="option"]:hover,
+[role="option"][aria-selected="true"] {
+  background: rgba(var(--spice-rgb-button), 0.22) !important;
 }
